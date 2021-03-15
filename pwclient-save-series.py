@@ -6,6 +6,7 @@ import json
 import requests
 import argparse
 import re
+import shutil
 from enum import Enum
 
 # PatchWork REST API Base URL.
@@ -203,7 +204,13 @@ def save_series(url, project_name, patch_state, dest_path, exclude_str=None,
             patches_path = os.path.join(series_path, "patches")
             if not os.path.exists(patches_path):
                 os.mkdir(patches_path)
-            save_patches(series_detail["patches"], patches_path)
+            try:
+                save_patches(series_detail["patches"], patches_path)
+            except requests.exceptions.HTTPError as e:
+                print("HTTPError: %s" % e)
+                print("Delete the folder and skip to the next")
+                shutil.rmtree(series_path)
+                continue
 
     print("Series patches are saved to: %s" % save_path)
 
