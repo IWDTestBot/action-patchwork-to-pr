@@ -11,7 +11,6 @@ import subprocess
 import configparser
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from httplib2 import Response
 from git import Repo
 from typing import List
 from github import Github, Repository
@@ -51,7 +50,7 @@ Linux Bluetooth
 '''
 
 
-def requests_url(url: str) -> Response:
+def requests_url(url: str):
     """ Helper function to request GET with URL """
     resp = requests.get(url)
     if resp.status_code != 200:
