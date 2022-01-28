@@ -575,7 +575,7 @@ def main():
                 if args.dry_run:
                     print("Dry-Run. Skip pw_submit_check(fail)")
                 else:
-                    if args.no_updata_check:
+                    if args.no_update_check:
                         print("No-Update-Check. Skip pw_submit_check(fail)")
                     else:
                         pw_submit_check(patch['id'], 3, "pre-ci_am", stderr)
@@ -593,7 +593,7 @@ def main():
             if args.dry_run:
                 print("Dry-Run. Skip pw_submit_check(pass)")
             else:
-                if args.no_updata_check:
+                if args.no_update_check:
                     print("No-Update-Check. Skip pw_submit_check(success)")
                 else:
                     pw_submit_check(patch['id'], 1, "pre-ci_am", "Success")
