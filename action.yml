@@ -4,17 +4,20 @@ name: Patchwork to PR
 description: 'Create PR after reading the patch series from the Patchwork URL'
 
 inputs:
-  pw_url:
-    description: Patchwork URL to get patch series
-    default: "https://patchwork.kernel.org/api/1.1"
-  pw_exclude_str:
-    description: String in title used to exclude in the list
-    default: "Bluetooth"
+  pw_key_str:
+    description: String in title used to include in the list
+    default: "Bluetooth:"
   base_branch:
     description: Branch name where the PR is pushed
-    default: "master"
+    default: "workflow"
   github_token:
     description: Secret github token
+    required: true
+  email_token:
+    description: Email token
+    required: true
+  patchwork_token:
+    description: Patchwork token
     required: true
 
 runs:
@@ -22,9 +25,10 @@ runs:
   image: 'Dockerfile'
   env:
     GITHUB_TOKEN: ${{ inputs.github_token }}
+    EMAIL_TOKEN: ${{ inputs.email_token }}
+    PATCHWORK_TOKEN: ${{ inputs.patchwork_token }}
   args:
-    - ${{ inputs.pw_url }}
-    - ${{ inputs.pw_exclude_str }}
+    - ${{ inputs.pw_key_str }}
     - ${{ inputs.base_branch }}
 
 branding:
