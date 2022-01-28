@@ -483,6 +483,8 @@ def parse_args() -> argparse.ArgumentParser:
     ap.add_argument('-i', '--ignore-check', action='store_true', default=False,
                     help='Ignore the patch\'s check status and process all new '
                          'series in the Patchwork. Debug only')
+    ap.add_argument('-n', '--no-update-check', action='store_true', default=False,
+                    help='Do not upload the patchwork status. Debug/Local only')
     ap.add_argument('-d', '--dry-run', action='store_true', default=False,
                     help='Run it without uploading the result')
     return ap.parse_args()
@@ -574,7 +576,10 @@ def main():
                 if args.dry_run:
                     print("Dry-Run. Skip pw_submit_check(fail)")
                 else:
-                    pw_submit_check(patch['id'], 3, "pre-ci_am", stderr)
+                    if args.no_updata_check:
+                        print("No-Update-Check. Skip pw_submit_check(fail)")
+                    else:
+                        pw_submit_check(patch['id'], 3, "pre-ci_am", stderr)
 
                 # Abort git am
                 git_am_abort(src_dir)
@@ -589,7 +594,10 @@ def main():
             if args.dry_run:
                 print("Dry-Run. Skip pw_submit_check(pass)")
             else:
-                pw_submit_check(patch['id'], 1, "pre-ci_am", "Success")
+                if args.no_updata_check:
+                    print("No-Update-Check. Skip pw_submit_check(success)")
+                else:
+                    pw_submit_check(patch['id'], 1, "pre-ci_am", "Success")
 
         if not verdict:
             print("PRE-CI_AM failed. Notify the submitter")
