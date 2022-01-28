@@ -114,6 +114,18 @@ def git_checkout(branch: str, cwd: str, create_branch=False) -> bool:
     return True
 
 
+def git_push(remote: str, branch: str, cwd: str, force=False) -> bool:
+    cmd = ['git', 'push', remote, branch]
+    if force:
+        cmd += ['--force']
+    (ret, stdout, stderr) = cmd_run(cmd, cwd=cwd)
+    if ret != 0:
+        print("ERROR: failed to push")
+        return False
+    print("Branch(%s) pushed to repo" % branch)
+    return True
+
+
 def git_am(patch: str, cwd: str):
     cmd = ['git', 'am', patch]
     return cmd_run(cmd, cwd=cwd)
@@ -614,6 +626,12 @@ def main():
         if args.dry_run:
             print("Dry-Run. Skip create_pr")
         else:
+            # Push branch to Github first
+            if not git_push('origin', str(id), src_dir):
+                print("ERROR: Failed to push the source to github")
+                print("ERROR: Skip creating Pull Request")
+                continue
+
             create_pr(series, args.branch, str(id))
 
     print("\n##### DONE #####\n")
