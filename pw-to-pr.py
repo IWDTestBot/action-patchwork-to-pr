@@ -8,7 +8,7 @@ import argparse
 import re
 import tempfile
 import subprocess
-import configparser
+import json
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from git import Repo
@@ -279,10 +279,10 @@ def email_sendmail(config: dict, from_addr: str, to_addr: str, message: str):
     print("EMAIL_TOKEN found")
 
     try:
-        session = smtplib.SMTP(config['server'], int(config['port']))
+        session = smtplib.SMTP(config['server'], config['port'])
         print("SMTP session is created")
         session.ehlo()
-        if 'starttls' not in config or config['starttls'] == 'yes':
+        if config['starttls']:
             session.starttls()
             print("SMTP TLS is set")
         session.ehlo()
@@ -302,7 +302,7 @@ def email_compose(config, series, content):
 
     to_addr = []
 
-    if config['enable'] != 'yes':
+    if not config['enable']:
         print("Email is DISABLED. Skip sending email")
         return
 
@@ -312,8 +312,8 @@ def email_compose(config, series, content):
     message['Reply-To'] = config['default-to']
 
     from_addr = config['user']
-    if 'only-maintainers' in config and config['only-maintainers'] == 'yes':
-        maintainers = "".join(config['maintainers'].splitlines()).split(",")
+    if config['only-maintainers']:
+        maintainers = config['maintainers']
         to_addr.extend(maintainers)
     else:
         to_addr.append(config['default-to'])
@@ -456,8 +456,8 @@ def init_config(config_file: str) -> dict:
         return None
 
     print("Loading config file: %s" % config_path)
-    config = configparser.ConfigParser()
-    config.read(config_path)
+    with open(config_path, 'r') as f:
+        config=json.load(f)
     return config
 
 
@@ -476,7 +476,7 @@ def parse_args() -> argparse.ArgumentParser:
     """ Parse input argument """
     ap = argparse.ArgumentParser(description="PatchWork client that saves the"
                                              "patches from the series")
-    ap.add_argument('-c', '--config-file', default='./config.ini',
+    ap.add_argument('-c', '--config-file', default='./config.json',
                     help='Configuration file')
     ap.add_argument("-p", "--patch-state", nargs='+', default=['1', '2'],
                     help="State of patch to query. Default is \'1\' and \'2\'")

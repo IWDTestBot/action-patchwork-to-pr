@@ -1,0 +1,19 @@
+{
+    "email": {
+        "enable": true,
+        "server": "smtp.gmail.com",
+        "port": 587,
+        "user": "bluez.test.bot@gmail.com",
+        "starttls": true,
+        "default-to": "linux-bluetooth@vger.kernel.org",
+        "only-maintainers": false,
+        "maintainers": [
+            "marcel@holtmann.org",
+            "luiz.dentz@gmail.com",
+            "johan.hedberg@gmail.com",
+            "brian.gix@intel.com",
+            "inga.stotland@intel.com",
+            "tedd.an@intel.com"
+        ]
+    }
+}
