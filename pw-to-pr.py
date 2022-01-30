@@ -445,6 +445,86 @@ def get_pw_sid(pr_title) -> int:
     return int(sid)
 
 
+def patch_get_file_list(patch: str) -> list:
+    """
+    Parse patch to get the file list
+    """
+
+    file_list = []
+
+    # split patch(in string) to list of string by newline
+    lines = patch.split('\n')
+    for line in lines:
+        if re.search(r'^\+\+\+ ', line):
+            # Trim the '+++ /'
+            file_list.append(line[line.find('/')+1:])
+
+    return file_list
+
+
+def series_get_file_list(series: dict) -> list:
+    """
+    Get the list of files from the patches in the series.
+    """
+
+    file_list = []
+
+    for patch in series['patches']:
+        full_patch = pw_get_patch(patch['id'])
+        file_list += patch_get_file_list(full_patch['diff'])
+
+    return file_list
+
+
+def filter_repo_type(repo_detail: dict, series: dict, src_dir: str) -> bool:
+    """
+    Check if the series belong to this repository
+
+    if the series[name] has exclude string
+        return False
+    if the series[name] has include string
+        return True
+    get file list from the patch in series
+    if the file exist
+        return True
+    else
+        return False
+    """
+
+    print("Check repo type for this series[name]=%s" % series['name'])
+
+    # Check Exclude string
+    for str in repo_detail['exclude']:
+        if re.search(str, series['name'], re.IGNORECASE):
+            print("Found EXCLUDE string: %s" % str)
+            return False
+
+    # Check Include string
+    for str in repo_detail['include']:
+        if re.search(str, series['name'], re.IGNORECASE):
+            print("Found INCLUDE string: %s" % str)
+            return True
+
+    # Get file list from the patches in the series
+    file_list = series_get_file_list(series)
+    if len(file_list) == 0:
+        # Something is not right.
+        print("ERROR: No files found in the series/patch")
+        return False
+    print("Files in Series=%s" % file_list)
+
+    # File exist in source tree?
+    for filename in file_list:
+        file_path = os.path.join(src_dir, filename)
+        if not os.path.exists(file_path):
+            print("File not found: %s" % filename)
+            return False
+
+    # Files exist in the source tree
+    print("Files exist in the source tree.")
+    return True
+
+
 def init_config(config_file: str) -> dict:
     """
     Read config_file
@@ -486,9 +566,9 @@ def parse_args() -> argparse.ArgumentParser:
     ap.add_argument("-b", "--branch", default="workflow",
                     help="Name of branch in base_repo where the PR is pushed. "
                          "Use <BRANCH> format. i.e. master")
-    ap.add_argument("-k", "--key-str", default="Bluetooth",
-                    help="Specify the string in the series title to be "
-                         "included from the list")
+    ap.add_argument("-k", "--key-str", default="kernel",
+                    help="Specify the string to distinguish the repo type: "
+                         "kernel or user")
     ap.add_argument('-s', '--src-dir', required=True,
                     help='Source directory')
     ap.add_argument('-i', '--ignore-check', action='store_true', default=False,
@@ -507,6 +587,11 @@ def main():
 
     new_series = []
     args = parse_args()
+
+    # Make sure args.key_str is valid
+    if args.key_str != 'kernel' and args.key_str != 'user':
+        print("ERROR: Invalid repo_type: %s" % args.key_str)
+        sys.exit(1)
 
     config = init_config(args.config_file)
     if config == None:
@@ -543,8 +628,8 @@ def main():
             series['name'] = patch_1['name']
             print("Series[\'name\'] is updated to \'%s\'" % series['name'])
 
-        if not re.search(args.key_str, series["name"], re.IGNORECASE):
-            print("No key string found: %s" % args.key_str)
+        if not filter_repo_type(config['repo_details'][args.key_str], series, src_dir):
+            print("NOT for this repo: %s" % args.key_str)
             continue
 
         # If the PR is already created in github, no need to continue

@@ -15,5 +15,25 @@
             "inga.stotland@intel.com",
             "tedd.an@intel.com"
         ]
+    },
+    "repo_details": {
+        "kernel": {
+            "include": [
+                "Bluetooth:"
+            ],
+            "exclude": [
+                "BlueZ"
+            ],
+            "upstream": "https://git.kernel.org/pub/scm/linux/kernel/git/bluetooth/bluetooth-next.git/"
+        },
+        "user": {
+            "include": [
+                "BlueZ"
+            ],
+            "exclude": [
+                "Bluetooth:"
+            ],
+            "upstream": "https://git.kernel.org/pub/scm/bluetooth/bluez.git/"
+        }
     }
 }

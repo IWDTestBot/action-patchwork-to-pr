@@ -5,8 +5,8 @@ description: 'Create PR after reading the patch series from the Patchwork URL'
 
 inputs:
   pw_key_str:
-    description: String in title used to include in the list
-    default: "Bluetooth:"
+    description: kernel or user
+    default: "kernel"
   base_branch:
     description: Branch name where the PR is pushed
     default: "workflow"
