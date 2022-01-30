@@ -19,8 +19,6 @@ from enum import Enum
 # Globals
 github_repo = None
 github_pulls = None
-series_root = None
-src_dir = None
 
 # Constants
 PW_BASE_URL = "https://patchwork.kernel.org/api"
@@ -582,8 +580,6 @@ def parse_args() -> argparse.ArgumentParser:
 
 
 def main():
-
-    global series_root, src_dir
 
     new_series = []
     args = parse_args()
