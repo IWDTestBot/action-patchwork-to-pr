@@ -458,8 +458,19 @@ def patch_get_file_list(patch: str) -> list:
     # split patch(in string) to list of string by newline
     lines = patch.split('\n')
     for line in lines:
-        if re.search(r'^\+\+\+ ', line):
-            # Trim the '+++ /'
+        # Use --- (before) instead of +++ (after).
+        # If file is new, --- is /dev/null and will be ignored
+        # If file is removed, file in --- still exist in the tree
+        # The corner case is if the patch adds new files. Even in this case
+        # even if new files are ignored, Makefile should be changed as well
+        # so it still can be checked.
+        if re.search(r'^\-\-\- ', line):
+            # it has new file. Ignore the file. It doesn't exist anyway.
+            if line.find('dev/null'):
+                print("New file is added. Ignore in the file list")
+                continue
+
+            # Trim the '--- /'
             file_list.append(line[line.find('/')+1:])
 
     return file_list
