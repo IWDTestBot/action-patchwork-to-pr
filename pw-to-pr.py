@@ -450,6 +450,11 @@ def patch_get_file_list(patch: str) -> list:
 
     file_list = []
 
+    # If patch has no contents, return empty file
+    if patch == None:
+        print("WARNING: No file found in patch")
+        return file_list
+
     # split patch(in string) to list of string by newline
     lines = patch.split('\n')
     for line in lines:
