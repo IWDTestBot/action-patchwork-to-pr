@@ -22,7 +22,7 @@
                 "Bluetooth:"
             ],
             "exclude": [
-                "BlueZ"
+                "BlueZ", "pull request"
             ],
             "upstream": "https://git.kernel.org/pub/scm/linux/kernel/git/bluetooth/bluetooth-next.git/"
         },
@@ -31,7 +31,7 @@
                 "BlueZ"
             ],
             "exclude": [
-                "Bluetooth:"
+                "Bluetooth:", "pull request"
             ],
             "upstream": "https://git.kernel.org/pub/scm/bluetooth/bluez.git/"
         }
