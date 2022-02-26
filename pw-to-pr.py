@@ -459,8 +459,8 @@ def patch_get_file_list(patch: str) -> list:
     lines = patch.split('\n')
     for line in lines:
         # Use --- (before) instead of +++ (after).
-        # If file is new, --- is /dev/null and will be ignored
-        # If file is removed, file in --- still exist in the tree
+        # If new file is added, --- is /dev/null and can be ignored
+        # If file is removed, file in --- still exists in the tree
         # The corner case is if the patch adds new files. Even in this case
         # even if new files are ignored, Makefile should be changed as well
         # so it still can be checked.
