@@ -465,8 +465,8 @@ def patch_get_file_list(patch: str) -> list:
         # even if new files are ignored, Makefile should be changed as well
         # so it still can be checked.
         if re.search(r'^\-\-\- ', line):
-            # it has new file. Ignore the file. It doesn't exist anyway.
-            if line.find('dev/null'):
+            # For new file, it should be dev/null. Ignore the file.
+            if line.find('dev/null') >= 0:
                 print("New file is added. Ignore in the file list")
                 continue
 
