@@ -442,6 +442,34 @@ def get_pw_sid(pr_title) -> int:
         return 0
     return int(sid)
 
+def patch_get_new_file_list(patch: str) -> list:
+    """
+    Parse patch to get the file that is newly added
+    """
+
+    file_list = []
+
+    # If patch has no contents, return empty file
+    if patch == None:
+        print("WARNING: No file found in patch")
+        return file_list
+
+    # split patch(in string) to list of string by newline
+    lines = patch.split('\n')
+    iter_lines = iter(lines)
+    for line in iter_lines:
+        try:
+            if re.search(r'^\-\-\- ', line):
+                if line.find('dev/null') >= 0:
+                    # Detect new file. Read next line to get the filename
+                    line2 = next(iter_lines)
+                    file_list.append(line2[line2.find('/')+1:])
+        except StopIteration:
+            # End of iteration or no next line. Nothing to do. Just pass
+            pass
+
+    print("New file in patch: %s" % file_list)
+    return file_list
 
 def patch_get_file_list(patch: str) -> list:
     """
@@ -476,18 +504,32 @@ def patch_get_file_list(patch: str) -> list:
     return file_list
 
 
-def series_get_file_list(series: dict) -> list:
+def series_get_file_list(series: dict, ignore_new_file: bool = False) -> list:
     """
     Get the list of files from the patches in the series.
     """
 
     file_list = []
+    new_file_list = []
 
     for patch in series['patches']:
         full_patch = pw_get_patch(patch['id'])
         file_list += patch_get_file_list(full_patch['diff'])
+        if ignore_new_file:
+            new_file_list += patch_get_new_file_list(full_patch['diff'])
 
-    return file_list
+    if ignore_new_file == False or len(new_file_list) == 0:
+        return file_list
+
+    print("Check if new file is in the file list")
+    new_list = []
+    for filename in file_list:
+        if filename in new_file_list:
+            print("file: %s is in new_file_list. Don't count this file")
+            continue
+        new_list.append(filename)
+
+    return new_list
 
 
 def filter_repo_type(repo_detail: dict, series: dict, src_dir: str) -> bool:
@@ -520,7 +562,7 @@ def filter_repo_type(repo_detail: dict, series: dict, src_dir: str) -> bool:
             return True
 
     # Get file list from the patches in the series
-    file_list = series_get_file_list(series)
+    file_list = series_get_file_list(series, ignore_new_file=True)
     if len(file_list) == 0:
         # Something is not right.
         print("ERROR: No files found in the series/patch")
