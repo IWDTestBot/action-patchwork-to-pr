@@ -19,6 +19,17 @@ inputs:
   patchwork_token:
     description: Patchwork token
     required: true
+  config:
+    description: Configuration file or remote file URL
+    required: false
+    default: /config.json
+  patchwork_id:
+    description: Patchwork project ID
+    required: true
+  email_message:
+    description: File/URL containing email notification message
+    required: false
+    default: /default-email-message.txt
 
 runs:
   using: 'docker'
@@ -30,6 +41,9 @@ runs:
   args:
     - ${{ inputs.pw_key_str }}
     - ${{ inputs.base_branch }}
+    - ${{ inputs.config }}
+    - ${{ inputs.patchwork_id }}
+    - ${{ inputs.email_message }}
 
 branding:
   icon: 'bluetooth'

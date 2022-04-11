@@ -15,6 +15,7 @@ from git import Repo
 from typing import List
 from github import Github, Repository
 from enum import Enum
+from urllib.request import urlretrieve
 
 # Globals
 github_repo = None
@@ -22,31 +23,12 @@ github_pulls = None
 
 # Constants
 PW_BASE_URL = "https://patchwork.kernel.org/api"
-PW_PROJECT_ID = "395"
+PW_PROJECT_ID = ""
 PR_TITLE_PREFIX='PW_SID'
 
 PW_URL_API_BASE = None
 
-
-EMAIL_MESSAGE = '''This is an automated email and please do not reply to this email.
-
-Dear Submitter,
-
-Thank you for submitting the patches to the linux bluetooth mailing list.
-While preparing the CI tests, the patches you submitted couldn't be applied to the current HEAD of the repository.
-
------ Output -----
-{}
-
-Please resolve the issue and submit the patches again.
-
-
----
-Regards,
-Linux Bluetooth
-
-'''
-
+EMAIL_MESSAGE = ''
 
 def requests_url(url: str):
     """ Helper function to request GET with URL """
@@ -613,7 +595,7 @@ def parse_args() -> argparse.ArgumentParser:
     ap = argparse.ArgumentParser(description="PatchWork client that saves the"
                                              "patches from the series")
     ap.add_argument('-c', '--config-file', default='./config.json',
-                    help='Configuration file')
+                    help='Configuration file or URL to file')
     ap.add_argument("-p", "--patch-state", nargs='+', default=['1', '2'],
                     help="State of patch to query. Default is \'1\' and \'2\'")
     ap.add_argument("-r", "--repo", required=True,
@@ -622,11 +604,13 @@ def parse_args() -> argparse.ArgumentParser:
     ap.add_argument("-b", "--branch", default="workflow",
                     help="Name of branch in base_repo where the PR is pushed. "
                          "Use <BRANCH> format. i.e. master")
-    ap.add_argument("-k", "--key-str", default="kernel",
+    ap.add_argument("-k", "--key-str", default=None,
                     help="Specify the string to distinguish the repo type: "
                          "kernel or user")
     ap.add_argument('-s', '--src-dir', required=True,
                     help='Source directory')
+    ap.add_argument('-a', '--patchwork-id', required=True)
+    ap.add_argument('-e', '--email-message-file', required=True)
     ap.add_argument('-i', '--ignore-check', action='store_true', default=False,
                     help='Ignore the patch\'s check status and process all new '
                          'series in the Patchwork. Debug only')
@@ -636,16 +620,35 @@ def parse_args() -> argparse.ArgumentParser:
                     help='Run it without uploading the result')
     return ap.parse_args()
 
+def is_url(config: str) -> bool:
+    prefixes = ('http://', 'https://')
+
+    return config.startswith(prefixes)
 
 def main():
+    global PW_PROJECT_ID
+    global EMAIL_MESSAGE
 
     new_series = []
     args = parse_args()
 
-    # Make sure args.key_str is valid
-    if args.key_str != 'kernel' and args.key_str != 'user':
+    # Make sure args.key_str is valid if supplied
+    if args.key_str and  args.key_str != 'kernel' and args.key_str != 'user':
         print("ERROR: Invalid repo_type: %s" % args.key_str)
         sys.exit(1)
+
+    if is_url(args.config_file):
+        urlretrieve(args.config_file, '/tmp/config.json')
+        args.config_file = '/tmp/config.json'
+
+    PW_PROJECT_ID = args.patchwork_id
+
+    if is_url(args.email_message_file):
+        urlretrieve(args.email_message_file, '/tmp/email_message.txt')
+        args.email_message_file = '/tmp/email_message.txt'
+
+    with open(args.email_message_file, 'r') as f:
+        EMAIL_MESSAGE = f.read()
 
     config = init_config(args.config_file)
     if config == None:
@@ -682,9 +685,11 @@ def main():
             series['name'] = patch_1['name']
             print("Series[\'name\'] is updated to \'%s\'" % series['name'])
 
-        if not filter_repo_type(config['repo_details'][args.key_str], series, src_dir):
-            print("NOT for this repo: %s" % args.key_str)
-            continue
+        if args.key_str and 'repo_details' in config:
+            if not filter_repo_type(config['repo_details'][args.key_str],
+                                    series, src_dir):
+                print("NOT for this repo: %s" % args.key_str)
+                continue
 
         # If the PR is already created in github, no need to continue
         if github_pr_exist(id):
