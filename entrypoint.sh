@@ -20,10 +20,18 @@ fi
 # Input Params
 PW_KEY_STR=$1
 BASE_BRANCH=$2
+CONFIG=$3
+PATCHWORK_ID=$4
+EMAIL_MESSAGE=$5
+USER=$6
 
 echo "Input Parameters"
 echo "1: PW_KEY_STR = $PW_KEY_STR"
 echo "2: BASE_BRANCH = $BASE_BRANCH"
+echo "3: CONFIG = $CONFIG"
+echo "4: PATCHWORK_ID = $PATCHWORK_ID"
+echo "5: EMAIL_MESSAGE = $EMAIL_MESSAGE"
+echo "6: USER = $USER"
 
 echo "Add the workspace dir to GIT safe directory"
 git config --global --add safe.directory $GITHUB_WORKSPACE
@@ -47,4 +55,4 @@ echo "HUB_PROTOCOL=$HUB_PROTOCOL"
 echo "GITHUB_USER=$GITHUB_USER"
 
 echo "########## RUN ##########"
-/pw-to-pr.py -c /config.json -r $GITHUB_REPOSITORY -b $BASE_BRANCH -k $PW_KEY_STR -s $PWD
+/pw-to-pr.py -e $EMAIL_MESSAGE -a $PATCHWORK_ID -u $USER -c $CONFIG -r $GITHUB_REPOSITORY -b $BASE_BRANCH -k $PW_KEY_STR -s $PWD
