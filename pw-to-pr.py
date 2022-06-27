@@ -563,6 +563,44 @@ def filter_repo_type(repo_detail: dict, series: dict, src_dir: str) -> bool:
     print("Files exist in the source tree.")
     return True
 
+def pw_archive_accepted(patch_id: int):
+    ret, _, _ = cmd_run(['git-pw', 'patch', 'update', '--state', 'accepted',
+                        '--archived', 'true', str(patch_id)])
+    if ret:
+        print("Failed to update patch")
+
+def archive_merged_patches(states, src):
+    repo = Repo(src)
+
+    commits = list(repo.iter_commits(rev="origin/master", max_count=100))
+
+    patches = pw_get_patches_by_state(states)
+    if len(patches) == 0:
+        print("No patches found")
+        return
+
+    for patch in patches:
+        # Download patch diff
+        ret, _, _ = cmd_run(['git-pw', 'patch', 'download', '--diff',
+                            str(patch['id']), '/tmp/diff.patch'], cwd=src)
+        if ret:
+            print("Failed to download diff for patch %d", patch[id])
+            continue
+
+        with open('/tmp/diff.patch') as f:
+            data = f.read().strip()
+
+        # Compare against tree
+        for i, commit in enumerate(commits):
+            if i == 0:
+                diff = repo.git.diff(commit).strip()
+            else:
+                diff = repo.git.diff(commit, commits[i - 1]).strip()
+
+            if diff == data:
+                print('"%s" has been merged, archiving in patchwork' % patch['name'])
+                print(pw_archive_accepted(patch['id']))
+                break
 
 def init_config(config_file: str) -> dict:
     """
@@ -663,6 +701,9 @@ def main():
 
     # Source Directory
     src_dir = args.src_dir
+
+    # Archive already merged patches
+    archive_merged_patches(args.patch_state, src_dir)
 
     # Get series dict { id: full detail of series[id] }
     new_series = get_new_series(args.patch_state)
