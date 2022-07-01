@@ -25,9 +25,12 @@ echo "Input Parameters"
 echo "1: PW_KEY_STR = $PW_KEY_STR"
 echo "2: BASE_BRANCH = $BASE_BRANCH"
 
+echo "Add the workspace dir to GIT safe directory"
+git config --global --add safe.directory $GITHUB_WORKSPACE
+
 echo "Setup GIT CONFIG USER"
-git config user.name "$GITHUB_ACTOR"
-git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
+git config --global user.name "$GITHUB_ACTOR"
+git config --global user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
 echo "Set GIT REMOTE URL for $GITHUB_REPOSITORY"
 git remote set-url origin "https://x-access-token:$GITHUB_TOKEN@github.com/$GITHUB_REPOSITORY"
